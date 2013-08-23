@@ -1,6 +1,19 @@
-var notify = function (title, body) {
-    // check for notification compatibility
-    if (window.Notification) {
+var notify = function (title, body, error) {
+    //Chrome & Safari both support ’webkitNotification’, but Safari(Apple) prefer ‘Notification’.
+    if (window.webkitNotifications && navigator.userAgent.indexOf("Chrome") > -1) {
+        if (webkitNotifications.checkPermission() == 0) {
+            var notification_test = webkitNotifications.createNotification(null, title, body);
+             notification_test.onclick = function() {this.cancel();} 
+             notification_test.replaceId = 'id' + Math.random();
+             notification_test.show();
+         } else {
+             webkitNotifications.requestPermission(function(){
+                notify(title, body);
+             });
+         }
+    } 
+    //Safari & other W3C 'Notification' supported Browser such as Firefox.
+    else if (window.Notification) {
         // if the user has not been asked to grant or deny notifications from this domain
         if (Notification.permission === 'default') {
             Notification.requestPermission(function() {
@@ -17,12 +30,7 @@ var notify = function (title, body) {
                 this.close();
             }
         } 
-        // if the user does not want notifications to come from this domain
-        else if (Notification.permission === 'denied') {
-            // be silent
-            return;
-        }
-    } else {
-        //TODO:show custom Notification board.
+    } else if (error) {
+        error();
     }
 }
